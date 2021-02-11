@@ -11,7 +11,7 @@ from tensorflow.contrib import learn
 
 def train():
     # # data loading
-    data_path = 'preprocessed_POSCO.csv' # csv 파일로 불러오기
+    data_path = 'preprocessed_jpn_re.csv' # csv 파일로 불러오기
     # 포스코 모델
     # data_path = 'repro_45.csv' # csv 파일로 불러오기
     contents, points = tool.loading_rdata(data_path) # CSV 읽어오기

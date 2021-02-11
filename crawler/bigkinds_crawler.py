@@ -106,28 +106,17 @@ def get_url(c, b, s, e, p):
 
 def get_article(l, f):
     base_url = 'https://www.kinds.or.kr/news/detailView.do?'
-
     article_text = []
-
     if l != None:
         article_url = base_url + l
-
         result = requests.get(article_url)
-
         data = json.loads(result.text)
-
         date = data['detail']['NEWS_ID']
-
         date2 = date.split('.')[1][0:14] #기사 작성 날짜
-
         text = data['detail']['CONTENT']
-
         text = re.sub('<.+?>', '', text, 0).strip() # 기사 내용
-
         text = re.sub('\[.*?]', '', text)
-
         switch = True
-
         while (switch):
             try:
                 a = text.index('[')

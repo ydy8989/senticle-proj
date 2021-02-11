@@ -24,11 +24,11 @@
 
 5. [make_preprocess.py](https://github.com/ydy8989/senticle/blob/master/Senticle-CNN/make_preprocess.py)
     - soynlp를 활용한 형태소 분석 및 불용어 처리
-     
+    
 6. [train.py](https://github.com/ydy8989/senticle/blob/master/Senticle-CNN/train.py)
     - 트레이닝
     - Flag를 이용해 파라미터 지정 
-7. [Senticle-LSTM.py]()
+7. [Senticle-LSTM.py](https://github.com/ydy8989/senticle-proj/blob/master/senticle-CNN/Senticle-LSTM.py)
     - LSTM, GRU, BasicRNN 셀을 이용한 결과에 신빙성 부여
 
 

@@ -15,14 +15,9 @@ nyun = input("몇 년치 출력?(최대 4년) : ")
 week_val = input("주말을 뺀 기사만 고려할까요? (y/n) : ")
 df = pd.read_csv(company+'_4y.csv')
 df = df.iloc[:,:2]
-
 df.columns = ['datetime','text']
-
 df.datetime = df.datetime.apply(lambda x:str(x))
-
-
 df.datetime = pd.to_datetime(df.datetime)
-
 df = df.sort_values('datetime')
 df = df.dropna()
 count = 0

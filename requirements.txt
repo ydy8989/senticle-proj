@@ -1,7 +1,0 @@
-numpy==1.15.4
-pandas==0.23.4
-finance-datareader==0.7.2
-html5lib==1.0.1
-tensorflow-gpu==1.12.0
-soynlp==0.0.49
-lime==0.1.1.32
