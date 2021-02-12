@@ -1,17 +1,15 @@
 # Senticle Project
 
 
-## 1. install requirements
-```pip install -r requirements.txt```
 
-## 2. crawler
+## 1. crawler
 #### bigkinds_crawler.py
 - 뉴스 데이터 제공 사이트 [Bigkinds](https://www.kinds.or.kr)로부터 keyword를 포함/배제한 기사 수집 크롤러
 #### naver_crawler.py
 - 네이버 증권 뉴스로부터 크롤링
 
 
-## 3. Senticle-CNN
+## 2. Senticle-CNN
 #### contents
 1. [cnn_tool.py](https://github.com/ydy8989/senticle/blob/master/Senticle-CNN/cnn_tool.py)
     - main.py에서 사용하는 자연어 전처리 관련 함수들 
