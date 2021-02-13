@@ -4,7 +4,8 @@
 
 ## 1. crawler
 #### bigkinds_crawler.py
-- 뉴스 데이터 제공 사이트 [Bigkinds](https://www.kinds.or.kr)로부터 keyword를 포함/배제한 기사 수집 크롤러
+- ~~뉴스 데이터 제공 사이트 [Bigkinds](https://www.kinds.or.kr)로부터 keyword를 포함/배제한 기사 수집 크롤러~~
+- 현재 수정 요망. 사이트 개편으로 인한 작동 중지
 #### naver_crawler.py
 - 네이버 증권 뉴스로부터 크롤링
 
