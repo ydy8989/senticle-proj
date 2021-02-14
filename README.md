@@ -6,6 +6,9 @@
 #### bigkinds_crawler.py
 - ~~뉴스 데이터 제공 사이트 [Bigkinds](https://www.kinds.or.kr)로부터 keyword를 포함/배제한 기사 수집 크롤러~~
 - 현재 수정 요망. 사이트 개편으로 인한 작동 중지
+- Selenuim 혹은 타 사이트에서의 크롤링 방식을 알아보는 중
+    - Bigkinds의 경우 api는 협약을 맺은 기관에만 제공하는 방향으로 개편됨
+    - [링크](https://www.kinds.or.kr/news/qnaView.do)
 #### naver_crawler.py
 - 네이버 증권 뉴스로부터 크롤링
 
