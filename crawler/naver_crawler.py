@@ -181,7 +181,7 @@ def read_article_cnn(l,code):
 
         f = open(f'{code}.csv', 'a', encoding='UTF-8', newline='')
         wr = csv.writer(f)
-        wr.writerow(article_text)
+        wr.writerow([article_text[0][0],article_text[0][1]])
 
     else:
         return 0
@@ -193,9 +193,7 @@ if __name__ == '__main__':
     #     get_url(i)
     print(last_page)
     for i in range(1, last_page):
-
         test = get_url(i)
-
         procs = []
 
         for index, number in enumerate(test):
@@ -207,8 +205,8 @@ if __name__ == '__main__':
         for proc in procs:
             proc.join()
 
-    h = hashlib.md5()
-    h.update(f'/item/news_read.nhn?article_id=0004238328&amp;office_id=009&amp;code={code}&amp;page=1&amp;sm=title_entity_id.basic'.encode())
+    # h = hashlib.md5()
+    # h.update(f'/item/news_read.nhn?article_id=0004238328&amp;office_id=009&amp;code={code}&amp;page=1&amp;sm=title_entity_id.basic'.encode())
     # print(h.hexdigest())
     # while True:
     #     for i in realtime_crawler():
