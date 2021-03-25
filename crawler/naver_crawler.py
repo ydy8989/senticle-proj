@@ -1,11 +1,9 @@
-from bs4 import BeautifulSoup
-from urllib.request import urlopen
-import re
 import csv
-import hashlib
-import threading
-import time
+import re
 from multiprocessing import Process
+from urllib.request import urlopen
+
+from bs4 import BeautifulSoup
 
 
 def get_last_page(p=1):
@@ -118,7 +116,7 @@ def read_article_url(l):
         text3 = ('.').join(text2)
         text4 = re.sub('\[.+?\]', '', text3, 0).strip()
         article_text.append([l[0], text4 + "."])
-        f = open(f'{code}.csv', 'a', encoding='UTF-8', newline='')
+        f = open(f'{code}.csv', 'a', encoding='cp949', newline='')
         wr = csv.writer(f)
         wr.writerow(article_text)
         return text4 + "."
@@ -179,7 +177,7 @@ def read_article_cnn(l,code):
 
         print(article_text)
 
-        f = open(f'{code}.csv', 'a', encoding='UTF-8', newline='')
+        f = open(f'{code}.csv', 'a', encoding='cp949', newline='')
         wr = csv.writer(f)
         wr.writerow([article_text[0][0],article_text[0][1]])
 

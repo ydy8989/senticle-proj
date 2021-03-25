@@ -1,8 +1,9 @@
+import pickle
+import random
+
 import numpy as np
 import pandas as pd
 import tensorflow as tf
-import random
-import pickle
 from soynlp.tokenizer import NounLMatchTokenizer
 
 

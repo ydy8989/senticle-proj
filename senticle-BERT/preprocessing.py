@@ -1,28 +1,13 @@
+import datetime
+import warnings
 from glob import glob
 from pathlib import Path
-import os
 
-datasets = 'new_senticle/NewsData/*.csv'
-# pathlib
-
-dirs = Path(datasets)
-path = dirs / '*.csv'
-# print(datasets)
-filename = glob(datasets)[0]
-print(filename)
-
+import FinanceDataReader as fdr
 import pandas as pd
-import numpy as np
 from sklearn.feature_extraction.text import TfidfVectorizer
-import datetime
 
-df = pd.read_csv(filename,  names = ['time','text'], header=None, index_col='time')
-
-# str to datetime
-df.index = pd.to_datetime(df.index, format='%Y-%m-%d %H:%M:%S', errors='raise')
-df = df.sort_index()
-df = df.reset_index()
-df
+warnings.filterwarnings(action='ignore')
 
 
 def del_same(df, str_threshold=50):
@@ -30,6 +15,7 @@ def del_same(df, str_threshold=50):
     In text sorted using datetime, if the Nth text and the first "str_threshold" string of the (N+1)th text are exactly the same, delete one of them.
     '''
     count = 0
+    leng_df = len(df)
     while True:
         count += 1
         try:
@@ -40,26 +26,30 @@ def del_same(df, str_threshold=50):
         except IndexError:
             pass
         else:
-            print('-----DELETE SAME TEXT SUCCESS!!\n')
+            print(f'-----DELETE {leng_df - len(df)}/{leng_df} SAME TEXT SUCCESS!!\n')
             return df  # break
 
 
-def del_similar(df):
+def del_similar(df, tfidf_threshold):
+    #     print(f'전체 {len(df)}개 중')
     tfidf_vectorizer = TfidfVectorizer(min_df=1)
     tfidf_matrix = tfidf_vectorizer.fit_transform(df.text)
     doc_similarities = (tfidf_matrix * tfidf_matrix.T)
     tf_idf = doc_similarities.toarray()
     del_index_list = []
+    #     tfidf_lst = []
     for i in range(0, len(tf_idf)):
         for j in range(i + 1, len(tf_idf)):
-            if tf_idf[i][j] > 0.5:
-                print(f'{i}-th and {j}-th text are similar! TF-IDF score is {round(tf_idf[i][j], 3)}')
+            #             tfidf_lst.append(tf_idf[i][j])
+            if tf_idf[i][j] > tfidf_threshold:
+                #                 print(f'{i}-th and {j}-th text are similar! TF-IDF score is {round(tf_idf[i][j],3)}')
                 del_index_list.append(i)
                 del_index_list.append(j)
     new_ind_lst = list(set(range(0, len(tf_idf))) - set(del_index_list))
+    print(f'-----DELETE {len(set(del_index_list))}/{len(df)} SIMILAR TEXT SUCCESS!! Left : {len(new_ind_lst)}\n')
     df = df.iloc[new_ind_lst]
     df = df.reset_index(drop=True)
-    print('-----DELETE SIMILAR TEXT SUCCESS!!\n')
+
     return df
 
 
@@ -81,7 +71,54 @@ def srt_end_cutting(df):
     return df
 
 
-df = del_same(df)
-df = del_similar(df)
-df = srt_end_cutting(df)
-df.head()
+def stock_to_Label(x):
+    news_date = datetime.datetime(x.year, x.month, x.day)
+    while news_date not in stock.index:  # 다음날 뉴스 매칭일이 주가 정보날짜에 없으면?
+        news_date = news_date + datetime.timedelta(1)
+    stock_change = stock.loc[news_date].Change
+    if stock_change >= 0:
+        return 1
+    else:
+        return 0
+
+
+def labeling(df):
+    df['market_time'] = df.time.apply(lambda x: datetime.datetime(x.year, x.month, x.day) + datetime.timedelta(1)
+    if datetime.time(x.month, x.day) >= datetime.time(hour=15, minute=30)
+    else datetime.datetime(x.year, x.month, x.day))
+    df['label'] = df['market_time'].apply(stock_to_Label)
+    return df
+
+
+if __name__ == '__main__':
+    datasets = '../data/*.csv'
+    dirs = Path(datasets)
+    filename = glob(datasets)[0]
+    print(filename)
+
+    df = pd.read_csv(filename, names=['time', 'text'], encoding='cp949', header=None, error_bad_lines=False,
+                     index_col='time')
+
+    drop_lst = []
+    for i in range(len(df)):
+        if len(df.index[i]) != 17:
+            drop_lst.append(df.index[i])
+    df = df.drop(drop_lst)
+    df.index = pd.to_datetime(df.index, format='%Y-%m-%d %H:%M:%S')  # , errors='raise')
+    df = df.sort_index()
+    df = df.reset_index()
+
+    df = del_same(df)
+    df = del_similar(df, tfidf_threshold=0.7)
+    df = srt_end_cutting(df)
+    print(len(df))
+
+    stock = fdr.DataReader('005490',
+                           f'{df.time[0].year}-{df.time[0].month}-{df.time[0].day}',
+                           f'{df.time[len(df) - 1].year}-{df.time[len(df) - 1].month}-{df.time[len(df) - 1].day}')
+
+    # Change가 0인 행 모두 삭제 (나중에 병합시 nan값으로 만들고, 채워주기 위함)
+    stock = stock.drop(stock[stock.Change == 0].index, axis=0)
+    df = labeling(df)
+    df
+
