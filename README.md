@@ -12,8 +12,16 @@
 #### naver_crawler.py
 - 네이버 증권 뉴스로부터 크롤링
 
+# 2. senticle-BERT
+- **구현중...**
+- Pipeline
+    - `naver_crawler.py`로부터 크롤링 
+        - 크롤링된 `csv`파일은 `senticle-proj/data/`에 저장
+    - `preprocessing.py`를 통해 `.csv` 파일 전처리
+    - `basic_kobert.py`를 통해 학습 
+    
 
-## 2. Senticle-CNN
+## ~~3. Senticle-CNN~~
 #### contents
 1. [cnn_tool.py](https://github.com/ydy8989/senticle/blob/master/Senticle-CNN/cnn_tool.py)
     - main.py에서 사용하는 자연어 전처리 관련 함수들 
