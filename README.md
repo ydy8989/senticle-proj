@@ -15,7 +15,7 @@
 # 2. senticle-BERT
 - **구현중...**
 - Pipeline
-    - `naver_crawler.py`로부터 크롤링 
+    - `crawler/naver_crawler.py`로부터 크롤링 
         - 크롤링된 `csv`파일은 `senticle-proj/data/`에 저장
     - `preprocessing.py`를 통해 `.csv` 파일 전처리
     - `basic_kobert.py`를 통해 학습 
