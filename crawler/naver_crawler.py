@@ -9,8 +9,15 @@ from bs4 import BeautifulSoup
 def get_last_page(p=1):
     # print('get_last_page 시작')
     global code
-    main_url = f'https://finance.naver.com/item/news_news.nhn?code={code}&page=' + str(p) + '&sm=title_entity_id.basic&clusterId='
 
+    if title_entity == True:
+        # 제목 기준 crawler
+        main_url = f'https://finance.naver.com/item/news_news.nhn?code={code}&page=' + str(
+            p) + '&sm=title_entity_id.basic&clusterId='
+    else:
+        # 내용 기준 crawler
+        main_url = f'https://finance.naver.com/item/news_news.nhn?code={code}&page=' + str(
+            p) + '&sm=entity_id.basic&clusterId='
     soup = get_html(main_url)
 
     last_btn = soup.find('td', class_='pgRR')
@@ -204,13 +211,22 @@ def read_article_cnn(l, code, title_entity):
 
 if __name__ == '__main__':
     code = str(input('Input Stock Item Code :'))
-    last_page = int(get_last_page())+1
-    print(f'Last page : {last_page}')
 
+    tmp = False
     # True : 제목 기준 클러스터링 False : 내용 기준 검색
-    title_entity=False
-
-
+    while not tmp:
+        ans = str(input('뉴스 공시 정렬 기준 (제목(Y), 내용(N)) : ')).lower()
+        if ans =='y':
+            title_entity=True
+            tmp = True
+        elif ans =='n':
+            title_entity = False
+            tmp = True
+        else:
+            print('정확히 입력해주세요.')
+            tmp = False
+    last_page = int(get_last_page()) + 1
+    print(f'Last page : {last_page}')
     for i in range(1, last_page):
         test = get_url(i)
         procs = []
