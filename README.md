@@ -1,9 +1,20 @@
-# Senticle Project
+# 💬 Senticle(SENimental analysis + arTICLE) Project
 
+## 📚Project Description
 
+기준 시점 뉴스 데이터를 통해 다음 날 주가 상/하락을 예측하는 프로젝트입니다.
+
+- ***기간*** : 2018.09.03 ~ 2018.10.16(약 6주)
+- ***task description*** :
+	- `Input` : 특정 기업 뉴스데이터 약 4년치
+	- `Output` : 주가 상/하락에 대한 binary classification 정보 
+- ***data overview*** :
+	- 
 
 ## 1. crawler
+
 #### bigkinds_crawler.py
+
 - ~~뉴스 데이터 제공 사이트 [Bigkinds](https://www.kinds.or.kr)로부터 keyword를 포함/배제한 기사 수집 크롤러~~
 - 현재 수정 요망. 사이트 개편으로 인한 작동 중지
 - Selenuim 혹은 타 사이트에서의 크롤링 방식을 알아보는 중
@@ -19,7 +30,6 @@
         - 크롤링된 `csv`파일은 `senticle-proj/data/`에 저장
     - `preprocessing.py`를 통해 `.csv` 파일 전처리
     - `basic_kobert.py`를 통해 학습 
-    
 
 ## ~~3. Senticle-CNN~~
 #### contents
@@ -44,5 +54,4 @@
 
 ### 안드로이드 소스코드(java)
 https://github.com/GeonKim/android_pospirl
-
 
