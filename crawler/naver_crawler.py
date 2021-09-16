@@ -2,14 +2,18 @@ import csv
 import re
 from multiprocessing import Process
 from urllib.request import urlopen
-
+from datetime import datetime
 from bs4 import BeautifulSoup
 
+# import sys
+# import io
+#
+# sys.stdout = io.TextIOWrapper(sys.stdout.detach(), encoding='utf-8')
+# sys.stderr = io.TextIOWrapper(sys.stderr.detach(), encoding='utf-8')
 
 def get_last_page(p=1):
     # print('get_last_page 시작')
     global code
-
     if title_entity == True:
         # 제목 기준 crawler
         main_url = f'https://finance.naver.com/item/news_news.nhn?code={code}&page=' + str(
@@ -19,9 +23,7 @@ def get_last_page(p=1):
         main_url = f'https://finance.naver.com/item/news_news.nhn?code={code}&page=' + str(
             p) + '&sm=entity_id.basic&clusterId='
     soup = get_html(main_url)
-
     last_btn = soup.find('td', class_='pgRR')
-
     if last_btn is None:
         return p
     else:
@@ -52,14 +54,11 @@ def get_url(page):
             page) + '&sm=entity_id.basic&clusterId='
     print(main_url)
     soup = get_html(main_url)
-    # print(soup)
     table = soup.find('table', attrs={'class': 'type5'})
     test_list = []
-
     # class=relation_lst로 시작하는 행을 삭제
     for tag in table.select('tr[class^="relation_lst"]'):
         tag.decompose()
-
     # for문을 돌면서 테이블에서 값을 가져옴
     for row in table.find_all('tr'):
         cells = row.find_all('td')
@@ -152,70 +151,65 @@ def read_article_cnn(l, code, title_entity):
     # print('read_arti_cnn 시작')
     # print(l)
     news_url = 'https://finance.naver.com'
-
     article_text = []
-
     if l != None:
         article_url = news_url + l[1]
-
         html = get_html(article_url)
-
         news_read = html.find('div', class_='scr01')
-
         for tag in news_read.select('div[class=link_news]'):
             tag.decompose()
-
         for tag in news_read.select('ul'):
             tag.decompose()
-
         for tag in news_read.select('strong'):
             tag.decompose()
-
         for tag in news_read.select('table'):
             tag.decompose()
-
         for tag in news_read.select('a'):
             tag.decompose()
-
         text = news_read.text
-
         text2 = text.split('.')
-
         for s in range(len(text2)-1, 0, -1):
             if '@' in text2[s]:
                 for j in range(len(text2) - 1, s - 1, -1):
                     text2.pop(j)
-
         for s in range(len(text2) - 1, 0, -1):
             if '한경로보뉴스' in text2[s]:
                 for j in range(len(text2) - 1, s - 1, -1):
                     text2.pop(j)
-
         text3 = ('.').join(text2)
-
         text4 = re.sub('\[.+?\]', '', text3, 0).strip()
+        article_text.append([l[0], text4 + '.'])#datetime.strptime(l[0], ' %Y.%m.%d %H:%M')
 
-        article_text.append([l[0], text4 + "."])
-
+        # article_text.append([l[0], text4 + "."])
+        # print(datetime.strptime(l[0], ' %Y.%m.%d %H:%M'))
+        # if type(article_text[0][0])==datetime:
+        # try:
+            # article_text.append()
         print(article_text)
         if title_entity:
-            f = open(f'../data/title_{code}.csv', 'a', encoding='cp949', newline='')
+            f = open(f'../data/title2_{code}.csv', 'a', -1, encoding='utf-8', newline='')
             wr = csv.writer(f)
-            wr.writerow([article_text[0][0],article_text[0][1]])
+            # if type(article_text[0][0])==datetime:
+            wr.writerow(article_text[0])
+            f.close()
         else:
-            f = open(f'../data/contents_{code}.csv', 'a', encoding='cp949', newline='')
+            f = open(f'../data/contents_{code}.csv', 'a', encoding='utf-8', newline='')
             wr = csv.writer(f)
-            wr.writerow([article_text[0][0], article_text[0][1]])
+            if type(article_text[0][0]) == datetime:
+                wr.writerow([article_text[0][0], article_text[0][1]])
+                f.close()
+        # else: #index에 특수문자가 들어가는 경우가 생김. 크롤링 단계에서 처리하기 위함
+        #     print('-------------공백-------------')
+        #     pass
     else:
         return 0
 
 if __name__ == '__main__':
-    code = str(input('Input Stock Item Code :'))
-
+    code = "005930"#str(input('Input Stock Item Code :'))
     tmp = False
     # True : 제목 기준 클러스터링 False : 내용 기준 검색
     while not tmp:
-        ans = str(input('뉴스 공시 정렬 기준 (제목(Y), 내용(N)) : ')).lower()
+        ans = 'y'#str(input('뉴스 공시 정렬 기준 (제목(Y), 내용(N)) : ')).lower()
         if ans =='y':
             title_entity=True
             tmp = True
@@ -225,13 +219,14 @@ if __name__ == '__main__':
         else:
             print('정확히 입력해주세요.')
             tmp = False
-    last_page = int(get_last_page()) + 1
+    last_page = min(1, int(get_last_page())) + 1 # page 401이상 있어도 기사가 안바뀜
     print(f'Last page : {last_page}')
     for i in range(1, last_page):
         test = get_url(i)
         procs = []
 
         for index, number in enumerate(test):
+            # print(number)
             proc = Process(target=read_article_cnn, args=(number, code, title_entity))
             procs.append(proc)
             proc.start()
