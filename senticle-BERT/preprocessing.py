@@ -42,7 +42,7 @@ def del_same(df, str_threshold=50):
             return df  # break
 
 def del_similar(df, tfidf_threshold):
-
+    #
     tfidf_vectorizer = TfidfVectorizer(min_df=1)
     tfidf_matrix = tfidf_vectorizer.fit_transform(df.text)
     doc_similarities = (tfidf_matrix * tfidf_matrix.T)
@@ -86,13 +86,20 @@ def srt_end_cutting(df):
 
 def stock_to_Label(x):
     news_date = datetime.datetime(x.year, x.month, x.day)
-    while news_date not in stock.index:  # 다음날 뉴스 매칭일이 주가 정보날짜에 없으면?
-        news_date = news_date + datetime.timedelta(1)
-    stock_change = stock.loc[news_date].Change
-    if stock_change >= 0:
-        return 1
+    # print(news_date, stock.index)
+    if news_date <= stock.index[-1]:
+        while news_date not in stock.index:  # 다음날 뉴스 매칭일이 주가 정보날짜에 없으면?
+            news_date = news_date + datetime.timedelta(1)
+        stock_change = stock.loc[news_date].Change
+        if stock_change >= 0:
+            return 1
+        elif stock_change<0:
+            return 0
     else:
-        return 0
+
+        return 2
+        # print("Today's stock price does not exist.")
+        # pass
 
 
 def labeling(df):
@@ -101,7 +108,10 @@ def labeling(df):
         if datetime.time(x.month, x.day) >= datetime.time(hour=15, minute=30)
         else datetime.datetime(x.year, x.month, x.day))
     df['label'] = df['market_time'].apply(stock_to_Label)
-    return df
+    no_label_ind = df[df['label']==2].index
+    del_df = df.drop(no_label_ind)
+    print(del_df)
+    return del_df
 
 
 if __name__ == '__main__':
@@ -110,6 +120,7 @@ if __name__ == '__main__':
     dirs = Path(datasets)
     for filename in glob(datasets):
         StockCode = filename.split('.csv')[0].split('_')[-1]
+        print('-' * 100)
         print('-' * 100)
         print(f'FILENAME : {filename}')
         print(f'StockCode : {StockCode}')
@@ -124,7 +135,7 @@ if __name__ == '__main__':
 
         drop_lst = []
         for i in range(len(df)):
-            if len(df.index[i]) != 17 and len(df.index[i].split('.')[0]) != 4:
+            if len(df.index[i]) != 17 and len(df.index[i].split('.')[0])!= 4:
                 drop_lst.append(df.index[i])
 
         df = df.drop(drop_lst)
