@@ -37,7 +37,7 @@ def get_html(u):
     # print('get_html시작')
     url = u
     html = urlopen(url)
-    soup = BeautifulSoup(html, 'html.parser')
+    soup = BeautifulSoup(html, 'html.parser', from_encoding='cp949')
     return soup
 
 def get_url(page):
@@ -187,7 +187,7 @@ def read_article_cnn(l, code, title_entity):
             # article_text.append()
         print(article_text)
         if title_entity:
-            f = open(f'../data/title2_{code}.csv', 'a', -1, encoding='utf-8', newline='')
+            f = open(f'../data/title_{code}.csv', 'a', -1, encoding='utf-8', newline='')
             wr = csv.writer(f)
             # if type(article_text[0][0])==datetime:
             wr.writerow(article_text[0])
@@ -205,35 +205,39 @@ def read_article_cnn(l, code, title_entity):
         return 0
 
 if __name__ == '__main__':
-    code = "005930"#str(input('Input Stock Item Code :'))
-    tmp = False
-    # True : 제목 기준 클러스터링 False : 내용 기준 검색
-    while not tmp:
-        ans = 'y'#str(input('뉴스 공시 정렬 기준 (제목(Y), 내용(N)) : ')).lower()
-        if ans =='y':
-            title_entity=True
-            tmp = True
-        elif ans =='n':
-            title_entity = False
-            tmp = True
-        else:
-            print('정확히 입력해주세요.')
-            tmp = False
-    last_page = min(1, int(get_last_page())) + 1 # page 401이상 있어도 기사가 안바뀜
-    print(f'Last page : {last_page}')
-    for i in range(1, last_page):
-        test = get_url(i)
-        procs = []
+    stockcode_lst = ['005930','000660','051910','035420']#,'207940','035720','005380','006400','068270','000270','005490','012330','066570']
+    for code in stockcode_lst:
+    # code = "005930"#str(input('Input Stock Item Code :'))
+        tmp = False
+        # True : 제목 기준 클러스터링 False : 내용 기준 검색
+        while not tmp:
+            ans = 'y'#str(input('뉴스 공시 정렬 기준 (제목(Y), 내용(N)) : ')).lower()
+            if ans =='y':
+                title_entity=True
+                tmp = True
+            elif ans =='n':
+                title_entity = False
+                tmp = True
+            else:
+                print('정확히 입력해주세요.')
+                tmp = False
 
-        for index, number in enumerate(test):
-            # print(number)
-            proc = Process(target=read_article_cnn, args=(number, code, title_entity))
-            procs.append(proc)
-            proc.start()
-            # print(number[0])
+        # page 401이상 있어도 기사가 안바뀌므로 max 400
+        last_page = min(400, int(get_last_page()))
+        print(f'Last page : {last_page}')
+        for i in range(1, last_page + 1):
+            test = get_url(i)
+            procs = []
 
-        for proc in procs:
-            proc.join()
+            for index, number in enumerate(test):
+                # print(number)
+                proc = Process(target=read_article_cnn, args=(number, code, title_entity))
+                procs.append(proc)
+                proc.start()
+                # print(number[0])
+
+            for proc in procs:
+                proc.join()
 
     # h = hashlib.md5()
     # h.update(f'/item/news_read.nhn?article_id=0004238328&amp;office_id=009&amp;code={code}&amp;page=1&amp;sm=title_entity_id.basic'.encode())
