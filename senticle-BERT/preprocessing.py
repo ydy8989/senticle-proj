@@ -21,7 +21,8 @@ def del_same(df, str_threshold=50):
     #
     while True:
         count += 1
-
+        if count%10==0:
+            print(count)
         try:
             print(f"Loop {count}-th preprocessing....")
             for i in range(0, len(df) - 1):
@@ -37,9 +38,9 @@ def del_same(df, str_threshold=50):
             df = df.drop(error_ind_lst)
             pass
         else:
-            print(f'-----DELETE {leng_df - len(df)}/{leng_df} SAME TEXT SUCCESS!!\n')
+            print(f'-----DELETE {leng_df - len(df)}/{leng_df} SAME TEXT SUCCESS!!')
             return df  # break
-#         print(len(df),'------------------------')
+
 def del_similar(df, tfidf_threshold):
 
     tfidf_vectorizer = TfidfVectorizer(min_df=1)
@@ -53,25 +54,30 @@ def del_similar(df, tfidf_threshold):
                 del_index_list.append(i)
                 del_index_list.append(j)
     new_ind_lst = list(set(range(0, len(tf_idf))) - set(del_index_list))
-    print(f'-----DELETE {len(set(del_index_list))}/{len(df)} SIMILAR TEXT SUCCESS!! Left : {len(new_ind_lst)}\n')
+    print(f'-----DELETE {len(set(del_index_list))}/{len(df)} SIMILAR TEXT SUCCESS!!')
+    print(f'Left : {len(new_ind_lst)} lines')
     df = df.iloc[new_ind_lst]
     df = df.reset_index(drop=True)
-
     return df
 
 
 def srt_end_cutting(df):
     # 시작일 기준 3시 30분 전 데이터 삭제
     try:
-        df = df.drop(df[df.time <= datetime.datetime(year=df.time[0].year, month=df.time[0].month, day=df.time[0].day,
-                                                     hour=15, minute=30)].index, axis=0)
+        df = df.drop(df[df.time <= datetime.datetime(year=df.time[0].year,
+                                                     month=df.time[0].month,
+                                                     day=df.time[0].day,
+                                                     hour=15,
+                                                     minute=30)].index, axis=0)
     except:
         pass
 
     # 종료일 기준 3시 30분 후 데이터 삭제
     try:
-        df = df.drop(df[df.time >= datetime.datetime(year=df.time[len(df) - 1].year, month=df.time[len(df) - 1].month,
-                                                     day=df.time[len(df) - 1].day, hour=15, minute=30)].index, axis=0)
+        df = df.drop(df[df.time >= datetime.datetime(year=df.time[len(df) - 1].year,
+                                                     month=df.time[len(df) - 1].month,
+                                                     day=df.time[len(df) - 1].day,
+                                                     hour=15, minute=30)].index, axis=0)
     except:
         pass
     df = df.reset_index(drop=True)
@@ -90,42 +96,55 @@ def stock_to_Label(x):
 
 
 def labeling(df):
-    df['market_time'] = df.time.apply(lambda x: datetime.datetime(x.year, x.month, x.day) + datetime.timedelta(1)
-    if datetime.time(x.month, x.day) >= datetime.time(hour=15, minute=30)
-    else datetime.datetime(x.year, x.month, x.day))
+    df['market_time'] = df.time.apply(
+        lambda x: datetime.datetime(x.year, x.month, x.day) + datetime.timedelta(1)
+        if datetime.time(x.month, x.day) >= datetime.time(hour=15, minute=30)
+        else datetime.datetime(x.year, x.month, x.day))
     df['label'] = df['market_time'].apply(stock_to_Label)
     return df
 
 
 if __name__ == '__main__':
-    datasets = '../data/*.csv'
+    tfidf_threshold = 0.75
+    datasets = '../data/title_*.csv'
     dirs = Path(datasets)
-    filename = glob(datasets)[-1]
-    print(filename)
-    df = pd.read_csv(filename, names=['time', 'text'], encoding='cp949', header=None, error_bad_lines=False,
-                     index_col='time')
+    for filename in glob(datasets):
+        StockCode = filename.split('.csv')[0].split('_')[-1]
+        print('-' * 100)
+        print(f'FILENAME : {filename}')
+        print(f'StockCode : {StockCode}')
+        print(f'tfidf_threshold : {tfidf_threshold}')
+        print('-'*50)
+        df = pd.read_csv(filename,
+                         names=['time', 'text'],
+                         encoding='utf8',
+                         header=None,
+                         error_bad_lines=False,
+                         index_col='time')
 
-    drop_lst = []
-    for i in range(len(df)):
-        if len(df.index[i]) != 17 and len(df.index[i].split('.')[0]) != 4:
-            drop_lst.append(df.index[i])
+        drop_lst = []
+        for i in range(len(df)):
+            if len(df.index[i]) != 17 and len(df.index[i].split('.')[0]) != 4:
+                drop_lst.append(df.index[i])
 
-    df = df.drop(drop_lst)
-    df.index = pd.to_datetime(df.index, format='%Y-%m-%d %H:%M:%S', errors='coerce')
-    df = df.dropna(axis=0)
-    df = df.drop_duplicates()
-    df = df.sort_index()
-    df = df.reset_index()
-    df = del_same(df)
-    df = del_similar(df, tfidf_threshold=0.7)
-    df = srt_end_cutting(df)
-    # print(len(df))
+        df = df.drop(drop_lst)
+        df.index = pd.to_datetime(df.index,
+                                  format='%Y-%m-%d %H:%M:%S',
+                                  errors='coerce')
+        df = df.dropna(axis=0)
+        df = df.drop_duplicates()
+        df = df.sort_index()
+        df = df.reset_index()
+        df = del_same(df)
+        df = del_similar(df, tfidf_threshold)
+        df = srt_end_cutting(df)
 
-    stock = fdr.DataReader(filename[-10:-4],
-                           f'{df.time[0].year}-{df.time[0].month}-{df.time[0].day}',
-                           f'{df.time[len(df) - 1].year}-{df.time[len(df) - 1].month}-{df.time[len(df) - 1].day}')
 
-    # #Change가 0인 행 모두 삭제 (나중에 병합시 nan값으로 만들고, 채워주기 위함)
-    stock = stock.drop(stock[stock.Change == 0].index, axis=0)
-    df = labeling(df)
+        stock = fdr.DataReader(StockCode,
+                               f'{df.time[0].year}-{df.time[0].month}-{df.time[0].day}',
+                               f'{df.time[len(df) - 1].year}-{df.time[len(df) - 1].month}-{df.time[len(df) - 1].day}')
 
+        # #Change가 0인 행 모두 삭제 (나중에 병합시 nan값으로 만들고, 채워주기 위함)
+        stock = stock.drop(stock[stock.Change == 0].index, axis=0)
+        df = labeling(df)
+        df.to_csv(f'../data/pre_{StockCode}.csv')
