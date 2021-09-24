@@ -6,7 +6,7 @@ from pathlib import Path
 import FinanceDataReader as fdr
 import pandas as pd
 from sklearn.feature_extraction.text import TfidfVectorizer
-
+from naver_crawler.exceptions import *
 warnings.filterwarnings(action='ignore')
 
 
@@ -21,7 +21,7 @@ def del_same(df, str_threshold=50):
     #
     while True:
         count += 1
-        if count%10==0:
+        if count % 10 == 0:
             print(count)
         try:
             print(f"Loop {count}-th preprocessing....")
@@ -32,14 +32,17 @@ def del_same(df, str_threshold=50):
             print(TE, f'// TE in {i} column')
             error_ind_lst.append(i)
             df = df.drop(error_ind_lst)
+            error_ind_lst = []
         except IndexError as IE:
             print(IE, f'// IE in {i} column')
             error_ind_lst.append(i)
             df = df.drop(error_ind_lst)
-            pass
+            error_ind_lst = []
+        #             pass
         else:
             print(f'-----DELETE {leng_df - len(df)}/{leng_df} SAME TEXT SUCCESS!!')
             return df  # break
+
 
 def del_similar(df, tfidf_threshold):
     #
@@ -93,7 +96,7 @@ def stock_to_Label(x):
         stock_change = stock.loc[news_date].Change
         if stock_change >= 0:
             return 1
-        elif stock_change<0:
+        elif stock_change < 0:
             return 0
     else:
 
@@ -108,54 +111,105 @@ def labeling(df):
         if datetime.time(x.month, x.day) >= datetime.time(hour=15, minute=30)
         else datetime.datetime(x.year, x.month, x.day))
     df['label'] = df['market_time'].apply(stock_to_Label)
-    no_label_ind = df[df['label']==2].index
+    no_label_ind = df[df['label'] == 2].index
     del_df = df.drop(no_label_ind)
     print(del_df)
     return del_df
 
 
+def time_transform(x):
+    if '오후' in x:
+        if int(x.split(' ')[-1].split(':')[0]) == 12:
+            return ' '.join(x.split('. 오후 '))
+        else:
+            newtime = int(x.split(' ')[-1].split(':')[0]) + 12
+            return x.split('. 오후 ')[0] + ' ' + str(newtime) + x.split('. 오후 ')[1][-3:]
+    else:
+        return ' '.join(x.split('. 오전 '))
+
+
 if __name__ == '__main__':
     tfidf_threshold = 0.75
-    datasets = '../data/title_*.csv'
+    datasets = '../data/삼성전자_*.csv'
     dirs = Path(datasets)
+    # if
     for filename in glob(datasets):
-        StockCode = filename.split('.csv')[0].split('_')[-1]
-        print('-' * 100)
-        print('-' * 100)
-        print(f'FILENAME : {filename}')
-        print(f'StockCode : {StockCode}')
-        print(f'tfidf_threshold : {tfidf_threshold}')
-        print('-'*50)
-        df = pd.read_csv(filename,
-                         names=['time', 'text'],
-                         encoding='utf8',
-                         header=None,
-                         error_bad_lines=False,
-                         index_col='time')
+        if len(filename.split('.csv')[0].split('_')) == 2:  # naver_crawler
+            StockCode = filename.split('.csv')[0].split('_')[-1]
+            print('-' * 100)
+            print('-' * 100)
+            print(f'FILENAME : {filename}')
+            print(f'StockCode : {StockCode}')
+            print(f'tfidf_threshold : {tfidf_threshold}')
+            print('-' * 50)
+            df = pd.read_csv(filename,
+                             names=['time', 'text'],
+                             encoding='utf8',
+                             header=None,
+                             error_bad_lines=False,
+                             index_col='time')
 
-        drop_lst = []
-        for i in range(len(df)):
-            if len(df.index[i]) != 17 and len(df.index[i].split('.')[0])!= 4:
-                drop_lst.append(df.index[i])
+            drop_lst = []
+            for i in range(len(df)):
+                if len(df.index[i]) != 17 and len(df.index[i].split('.')[0]) != 4:
+                    drop_lst.append(df.index[i])
 
-        df = df.drop(drop_lst)
-        df.index = pd.to_datetime(df.index,
-                                  format='%Y-%m-%d %H:%M:%S',
-                                  errors='coerce')
-        df = df.dropna(axis=0)
-        df = df.drop_duplicates()
-        df = df.sort_index()
-        df = df.reset_index()
-        df = del_same(df)
-        df = del_similar(df, tfidf_threshold)
-        df = srt_end_cutting(df)
+            df = df.drop(drop_lst)
+            df.index = pd.to_datetime(df.index,
+                                      format='%Y-%m-%d %H:%M:%S',
+                                      errors='coerce')
+            df = df.dropna(axis=0)
+            df = df.drop_duplicates()
+            df = df.sort_index()
+            df = df.reset_index()
+            df = del_same(df)
+            df = del_similar(df, tfidf_threshold)
+            df = srt_end_cutting(df)
 
+            stock = fdr.DataReader(StockCode,
+                                   f'{df.time[0].year}-{df.time[0].month}-{df.time[0].day}',
+                                   f'{df.time[len(df) - 1].year}-{df.time[len(df) - 1].month}-{df.time[len(df) - 1].day}')
 
-        stock = fdr.DataReader(StockCode,
-                               f'{df.time[0].year}-{df.time[0].month}-{df.time[0].day}',
-                               f'{df.time[len(df) - 1].year}-{df.time[len(df) - 1].month}-{df.time[len(df) - 1].day}')
+            # #Change가 0인 행 모두 삭제 (나중에 병합시 nan값으로 만들고, 채워주기 위함)
+            stock = stock.drop(stock[stock.Change == 0].index, axis=0)
+            df = labeling(df)
+            df.to_csv(f'../data/pre_{StockCode}.csv')
+        else:
+            #     if len(filename.split('.csv')[0].split('_'))==3:
+            df = pd.read_csv(filename,
+                             names=['time', 'stock', 'newspaper', 'header', 'text', 'url'],
+                             encoding='utf8',
+                             header=None,
+                             error_bad_lines=False,
+                             index_col='time'
+                             )
+            try:
+                stocklist = fdr.StockListing('KRX')
+                StockCode = stocklist[stocklist['Name'] == df.stock[0]].Symbol.values.tolist()[0]
+            except:
+                raise NoStockSymbol(df.stock[0])
+            print(StockCode)
+            drop_lst = []
+            for i in range(len(df)):
+                if len(df.index[i]) != 20 and len(df.index[i].split('.')[0]) != 4:
+                    drop_lst.append(df.index[i])
+            df = df.drop(drop_lst)
+            df.index = df.index.map(lambda x: time_transform(x))
+            df.index = pd.to_datetime(df.index,
+                                      format='%Y-%m-%d %H:%M:%S',
+                                      errors='coerce')
+            df = df.dropna(axis=0)
+            df = df.drop_duplicates()
+            df = df.sort_index()
+            df = df.reset_index()
+            df = del_same(df)
+            df = del_similar(df, tfidf_threshold)
+            df = srt_end_cutting(df)
+            stock = fdr.DataReader(StockCode,
+                                   f'{df.time[0].year}-{df.time[0].month}-{df.time[0].day}',
+                                   f'{df.time[len(df) - 1].year}-{df.time[len(df) - 1].month}-{df.time[len(df) - 1].day}')
 
-        # #Change가 0인 행 모두 삭제 (나중에 병합시 nan값으로 만들고, 채워주기 위함)
-        stock = stock.drop(stock[stock.Change == 0].index, axis=0)
-        df = labeling(df)
-        df.to_csv(f'../data/pre_{StockCode}.csv')
+            # #Change가 0인 행 모두 삭제 (나중에 병합시 nan값으로 만들고, 채워주기 위함)
+            stock = stock.drop(stock[stock.Change == 0].index, axis=0)
+            df = labeling(df)
+            df.to_csv(f'../data/pre_{StockCode}.csv')

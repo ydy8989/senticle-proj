@@ -7,9 +7,9 @@ from time import sleep
 from bs4 import BeautifulSoup
 from multiprocessing import Process
 import datetime
-from crawler.exceptions import *
-from crawler.articleparser import ArticleParser
-from crawler.writer import Writer
+from naver_crawler.exceptions import *
+from naver_crawler.articleparser import ArticleParser
+from naver_crawler.writer import Writer
 from tqdm import tqdm
 class ArticleCrawler(object):
     def __init__(self):
@@ -87,7 +87,7 @@ class ArticleCrawler(object):
                      f'{query}&sm=tab_opt&sort=1&photo=0&field=0&pd=3&'
         target_urls = self.make_news_page_url_my(url_format, self.ds, self.de)
         print(query + " Urls are generated")
-        print("The crawler starts")
+        print("The naver_crawler starts")
         print(len(target_urls))
         for url in tqdm(target_urls):
             request = self.get_url_data(url)
@@ -161,13 +161,16 @@ class ArticleCrawler(object):
         writer.close()
     def start(self):
         # MultiProcess 크롤링 시작
+        procs = []
         for category_name in self.selected_queries: #selected_cate : 리스트임
             proc = Process(target=self.crawling, args=(category_name,))
+            procs.append(proc)
             proc.start()
-
+        for proc in procs:
+            proc.join()
 
 if __name__ == "__main__":
     Crawler = ArticleCrawler()
     Crawler.set_category('삼성전자')#, '포스코','KT','검색어',...
-    Crawler.set_date_range('20200101', '20200401')# 'YYYYMMDD'
+    Crawler.set_date_range('20200101', '20200211')# 'YYYYMMDD'
     Crawler.start()

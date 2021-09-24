@@ -81,3 +81,10 @@ class ExistFile(Exception):
 
     def __str__(self):
         return self.message
+
+class NoStockSymbol(Exception):
+    def __init__(self, query):
+        self.message = f"{query}는 존재하지 않는 종목입니다."
+
+    def __str__(self):
+        return self.message

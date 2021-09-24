@@ -1,7 +1,7 @@
 import csv
 import platform
 import os
-from crawler.exceptions import *
+from naver_crawler.exceptions import *
 
 class Writer(object):
     def __init__(self, query, ds, de):
