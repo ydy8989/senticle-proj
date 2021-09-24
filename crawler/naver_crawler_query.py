@@ -10,8 +10,7 @@ import datetime
 from crawler.exceptions import *
 from crawler.articleparser import ArticleParser
 from crawler.writer import Writer
-
-
+from tqdm import tqdm
 class ArticleCrawler(object):
     def __init__(self):
         self.selected_queries = []
@@ -90,7 +89,7 @@ class ArticleCrawler(object):
         print(query + " Urls are generated")
         print("The crawler starts")
         print(len(target_urls))
-        for idx, url in enumerate(target_urls):
+        for url in tqdm(target_urls):
             request = self.get_url_data(url)
             document = BeautifulSoup(request.content, 'html.parser')
             temp_post = document.select("a[href^='https://news.naver.com/main/read']")
@@ -99,12 +98,12 @@ class ArticleCrawler(object):
             for line in temp_post:
                 # 해당되는 page에서 모든 기사들의 URL을 post_urls 리스트에 넣음
                 post_urls.append(line.attrs['href'])
-            print(post_urls)
+            # print(post_urls)
             del temp_post
             for content_url in post_urls:  # 기사 url
                 # 크롤링 대기 시간
                 sleep(0.01)
-                print(content_url)
+                # print(content_url)
                 # 기사 HTML 가져옴
                 request_content = self.get_url_data(content_url)
 
@@ -131,7 +130,7 @@ class ArticleCrawler(object):
                     # 공백일 경우 기사 제외 처리
                     if not text_sentence:
                         continue
-                    print(text_sentence)
+                    # print(text_sentence)
                     # 기사 언론사 가져옴
                     tag_company = document_content.find_all('meta', {'property': 'me2:category1'})
 
@@ -142,7 +141,7 @@ class ArticleCrawler(object):
                     # 공백일 경우 기사 제외 처리
                     if not text_company:
                         continue
-                    print(text_company)
+                    # print(text_company)
                     # 기사 시간대 가져옴
                     time = re.findall('<span class="t11">(.*)</span>', request_content.text)[0]
 
@@ -170,5 +169,5 @@ class ArticleCrawler(object):
 if __name__ == "__main__":
     Crawler = ArticleCrawler()
     Crawler.set_category('삼성전자')#, '포스코','KT','검색어',...
-    Crawler.set_date_range('20200101', '20210101')# 'YYYYMMDD'
+    Crawler.set_date_range('20200101', '20200401')# 'YYYYMMDD'
     Crawler.start()
