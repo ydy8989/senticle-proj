@@ -2,9 +2,12 @@ import datetime
 import warnings
 from glob import glob
 from pathlib import Path
+from typing import Union, Any
 
 import FinanceDataReader as fdr
 import pandas as pd
+from pandas import Series
+from pandas.core.generic import NDFrame
 from sklearn.feature_extraction.text import TfidfVectorizer
 from naver_crawler.exceptions import *
 warnings.filterwarnings(action='ignore')
@@ -99,10 +102,7 @@ def stock_to_Label(x):
         elif stock_change < 0:
             return 0
     else:
-
         return 2
-        # print("Today's stock price does not exist.")
-        # pass
 
 
 def labeling(df):
@@ -127,14 +127,53 @@ def time_transform(x):
     else:
         return ' '.join(x.split('. 오전 '))
 
+def total_preprocess(filename, colnames, tfidf_threshold, query_crawler=True):
+    drop_lst = []
+    df = pd.read_csv(filename,
+                     names=colnames,
+                     encoding='utf8',
+                     header=None,
+                     error_bad_lines=False,
+                     index_col='time')
+    if query_crawler:
+        try:
+            stocklist = fdr.StockListing('KRX')
+            StockCode = stocklist[stocklist['Name'] == df.stock[0]].Symbol.values.tolist()[0]
+            print('StockCode : ', StockCode)
+        except:
+            raise NoStockSymbol(df.stock[0])
+        df.index = df.index.map(lambda x: time_transform(x))
+
+    for i in range(len(df)):
+        # 날짜 파싱 시 finance 크롤러는 앞에 한 칸이 들어감 => 17
+        # 일반 query 크롤러는 한 칸이 미포함 => 16
+        # and 뒷 부분 : 가끔 년도가 4자리 이외의 숫자로 크롤링될 때가 있음.
+        if ((len(df.index[i]) != 16) or (len(df.index[i]) != 17)) and len(df.index[i].split('.')[0]) != 4:
+            drop_lst.append(df.index[i])
+    df = df.drop(drop_lst)
+    df.index = pd.to_datetime(df.index,
+                              format='%Y-%m-%d %H:%M:%S',
+                              errors='coerce')
+    df = df.dropna(axis=0)
+    df = df.drop_duplicates()
+    df = df.sort_index()
+    df = df.reset_index()
+    df = del_same(df)
+    df = del_similar(df, tfidf_threshold)
+    df = srt_end_cutting(df)
+    if query_crawler:
+        return df, StockCode
+    else:
+        return df
 
 if __name__ == '__main__':
     tfidf_threshold = 0.75
+    query_crawler = True # False means that crawl data is output of finance_crawler.py
     datasets = '../data/삼성전자_*.csv'
     dirs = Path(datasets)
-    # if
+
     for filename in glob(datasets):
-        if len(filename.split('.csv')[0].split('_')) == 2:  # naver_crawler
+        if not query_crawler:  # naver_crawler
             StockCode = filename.split('.csv')[0].split('_')[-1]
             print('-' * 100)
             print('-' * 100)
@@ -142,30 +181,8 @@ if __name__ == '__main__':
             print(f'StockCode : {StockCode}')
             print(f'tfidf_threshold : {tfidf_threshold}')
             print('-' * 50)
-            df = pd.read_csv(filename,
-                             names=['time', 'text'],
-                             encoding='utf8',
-                             header=None,
-                             error_bad_lines=False,
-                             index_col='time')
-
-            drop_lst = []
-            for i in range(len(df)):
-                if len(df.index[i]) != 17 and len(df.index[i].split('.')[0]) != 4:
-                    drop_lst.append(df.index[i])
-
-            df = df.drop(drop_lst)
-            df.index = pd.to_datetime(df.index,
-                                      format='%Y-%m-%d %H:%M:%S',
-                                      errors='coerce')
-            df = df.dropna(axis=0)
-            df = df.drop_duplicates()
-            df = df.sort_index()
-            df = df.reset_index()
-            df = del_same(df)
-            df = del_similar(df, tfidf_threshold)
-            df = srt_end_cutting(df)
-
+            colnames = ['time','text']
+            df = total_preprocess(filename, colnames, tfidf_threshold)
             stock = fdr.DataReader(StockCode,
                                    f'{df.time[0].year}-{df.time[0].month}-{df.time[0].day}',
                                    f'{df.time[len(df) - 1].year}-{df.time[len(df) - 1].month}-{df.time[len(df) - 1].day}')
@@ -175,40 +192,16 @@ if __name__ == '__main__':
             df = labeling(df)
             df.to_csv(f'../data/pre_{StockCode}.csv')
         else:
-            #     if len(filename.split('.csv')[0].split('_'))==3:
-            df = pd.read_csv(filename,
-                             names=['time', 'stock', 'newspaper', 'header', 'text', 'url'],
-                             encoding='utf8',
-                             header=None,
-                             error_bad_lines=False,
-                             index_col='time'
-                             )
-            try:
-                stocklist = fdr.StockListing('KRX')
-                StockCode = stocklist[stocklist['Name'] == df.stock[0]].Symbol.values.tolist()[0]
-            except:
-                raise NoStockSymbol(df.stock[0])
-            print(StockCode)
-            drop_lst = []
-            for i in range(len(df)):
-                if len(df.index[i]) != 20 and len(df.index[i].split('.')[0]) != 4:
-                    drop_lst.append(df.index[i])
-            df = df.drop(drop_lst)
-            df.index = df.index.map(lambda x: time_transform(x))
-            df.index = pd.to_datetime(df.index,
-                                      format='%Y-%m-%d %H:%M:%S',
-                                      errors='coerce')
-            df = df.dropna(axis=0)
-            df = df.drop_duplicates()
-            df = df.sort_index()
-            df = df.reset_index()
-            df = del_same(df)
-            df = del_similar(df, tfidf_threshold)
-            df = srt_end_cutting(df)
+            print('-' * 100)
+            print('-' * 100)
+            print(f'FILENAME : {filename}')
+            print(f'tfidf_threshold : {tfidf_threshold}')
+            print('-' * 50)
+            colnames = ['time', 'stock', 'newspaper', 'header', 'text', 'url']
+            df, StockCode = total_preprocess(filename, colnames, tfidf_threshold)
             stock = fdr.DataReader(StockCode,
                                    f'{df.time[0].year}-{df.time[0].month}-{df.time[0].day}',
                                    f'{df.time[len(df) - 1].year}-{df.time[len(df) - 1].month}-{df.time[len(df) - 1].day}')
-
             # #Change가 0인 행 모두 삭제 (나중에 병합시 nan값으로 만들고, 채워주기 위함)
             stock = stock.drop(stock[stock.Change == 0].index, axis=0)
             df = labeling(df)
