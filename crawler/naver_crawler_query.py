@@ -7,18 +7,18 @@ from time import sleep
 from bs4 import BeautifulSoup
 from multiprocessing import Process
 import datetime
-from exceptions import *
-from articleparser import ArticleParser
-from writer import Writer2
+from crawler.exceptions import *
+from crawler.articleparser import ArticleParser
+from crawler.writer import Writer
 
 
 class ArticleCrawler(object):
     def __init__(self):
-        self.selected_categories = []
+        self.selected_queries = []
         self.user_operating_system = str(platform.system())
 
     def set_category(self, *args):
-        self.selected_categories = args
+        self.selected_queries = args
 
     def set_date_range(self, ds, de):#datestart, dateend
         self.ds = ds
@@ -51,13 +51,13 @@ class ArticleCrawler(object):
             url = category_url + f'ds={ds}&de={de}' \
                 f'&mynews=0&office_type=0&office_section_code=0&news_office_checked=&nso=so:dd,' \
                 f'p:from{ds}to{de},a:all&start='
-            totalpage = ArticleParser.find_news_totalpage_my(url + "10000")  # 어떨땐 400, 아닐땐 1~399중 하나
+            totalpage = ArticleParser.find_news_totalpage(url + "10000")  # 어떨땐 400, 아닐땐 1~399중 하나
             request = self.get_url_data(url + f"{totalpage - 1}1")  # 마지막 페이지
             document = BeautifulSoup(request.content, 'html.parser')
             last_time_post = document.select('.api_subject_bx .group_news li .news_area .info_group span.info')
             if totalpage == 400 and len(last_time_post) >= 1:
                 last_time = datetime.datetime.strptime(last_time_post[-1].text, '%Y.%m.%d.')
-                for page in range(1, totalpage):
+                for page in range(1, totalpage+1):
                     made_urls.append(url + f'{page-1}1')
                 # 다했으면 de 날짜 바꾸기
                 if last_time > datetime.datetime.strptime(ds, '%Y%m%d'):
@@ -68,53 +68,39 @@ class ArticleCrawler(object):
                     break
 
             elif totalpage != 400:
-                # print('42')
                 print(totalpage - 1, '막지막 여기페이지는 여기올')  # totalpage가 400이 아니라 그 미만일 때
                 for page in range(1, totalpage):
                     made_urls.append(url + f'{page}1')
-                print(f'시작 : {ds}, 종료 : {de}를 끝으로 마무리')
-                print('마지막 url')
-                print(url + f'{page-1}1')
+
+                print('-' * 100)
+                print('최종 크롤링 페이지 수 :', len(made_urls))
+                print('-' * 100)
                 break
-            print('현재 리스트 렝스', len(made_urls))
-        print('make_news_page_url_my 종료함')
+            print('누적 페이지 수:', len(made_urls))
         return made_urls
 
-    def crawling(self, category_name):
+    def crawling(self, query):
         # Multi Process PID
-        print(category_name + " PID: " + str(os.getpid()))
+        print(query + " PID: " + str(os.getpid()))
 
-        writer = Writer2(category_name, ds=self.ds, de=self.de)
-        url_format = f'https://search.naver.com/search.naver?where=news&query={category_name}' \
-                        f'&sm=tab_opt&sort=1&photo=0&field=0&pd=3&'
+        writer = Writer(query, ds=self.ds, de=self.de)
+        url_format = f'https://search.naver.com/search.naver?where=news&query=' \
+                     f'{query}&sm=tab_opt&sort=1&photo=0&field=0&pd=3&'
         target_urls = self.make_news_page_url_my(url_format, self.ds, self.de)
-        # print(target_urls) #페이지들이 모여야함
-        print('시작 : ', target_urls[:3])
-        print('끝 : ', target_urls[-3:])
-        print(category_name + " Urls are generated")
+        print(query + " Urls are generated")
         print("The crawler starts")
-        # group_info = []
         print(len(target_urls))
         for idx, url in enumerate(target_urls):
             request = self.get_url_data(url)
             document = BeautifulSoup(request.content, 'html.parser')
-            # print(request.content)
-            # html - newsflash_body - type06_headline, type06
-            # 각 페이지에 있는 기사들 가져오기
-            # temp_post = document.select('.api_subject_bx .group_news li .news_area')
-            #https://news.naver.com/main/read
             temp_post = document.select("a[href^='https://news.naver.com/main/read']")
-            # print(temp_post)
             # 각 페이지에 있는 기사들의 url 저장
             post_urls = []
             for line in temp_post:
-                # print(line.)
                 # 해당되는 page에서 모든 기사들의 URL을 post_urls 리스트에 넣음
                 post_urls.append(line.attrs['href'])
             print(post_urls)
-            # print(len(post_urls))
             del temp_post
-            # asdfasdfasdfasdfasdf
             for content_url in post_urls:  # 기사 url
                 # 크롤링 대기 시간
                 sleep(0.01)
@@ -124,8 +110,6 @@ class ArticleCrawler(object):
 
                 try:
                     document_content = BeautifulSoup(request_content.content, 'html.parser')
-                    # print(document_content)
-                    # aasdfasdfasdf
                 except:
                     continue
 
@@ -163,7 +147,7 @@ class ArticleCrawler(object):
                     time = re.findall('<span class="t11">(.*)</span>', request_content.text)[0]
 
                     # CSV 작성
-                    writer.write_row([time, category_name, text_company, text_headline, text_sentence, content_url])
+                    writer.write_row([time, query, text_company, text_headline, text_sentence, content_url])
 
                     # del time
                     del text_company, text_sentence, text_headline
@@ -178,13 +162,13 @@ class ArticleCrawler(object):
         writer.close()
     def start(self):
         # MultiProcess 크롤링 시작
-        for category_name in self.selected_categories: #selected_cate : 리스트임
+        for category_name in self.selected_queries: #selected_cate : 리스트임
             proc = Process(target=self.crawling, args=(category_name,))
             proc.start()
 
 
 if __name__ == "__main__":
     Crawler = ArticleCrawler()
-    Crawler.set_category('삼성전자')#,'삼성전자')
-    Crawler.set_date_range('20210814', '20210814')
+    Crawler.set_category('삼성전자')#, '포스코','KT','검색어',...
+    Crawler.set_date_range('20200101', '20210101')# 'YYYYMMDD'
     Crawler.start()
