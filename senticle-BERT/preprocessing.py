@@ -32,18 +32,18 @@ def del_same(df, str_threshold=50):
                 if df.iloc[i].text[:str_threshold] == df.iloc[i + 1].text[:str_threshold]:
                     df = df.drop(df.iloc[i + 1].name, axis=0)
         except TypeError as TE:
-            print(TE, f'// TE in {i} column')
+            print(TE, f'// TypeError in [{i}] row')
             error_ind_lst.append(i)
             df = df.drop(error_ind_lst)
             error_ind_lst = []
         except IndexError as IE:
-            print(IE, f'// IE in {i} column')
+            print(IE, f'// IndexError in [{i}] row')
             error_ind_lst.append(i)
             df = df.drop(error_ind_lst)
             error_ind_lst = []
         #             pass
         else:
-            print(f'-----DELETE {leng_df - len(df)}/{leng_df} SAME TEXT SUCCESS!!')
+            print(f'-----DELETE {leng_df - len(df)}/{leng_df} SAME TEXT SUCCESS!!-----')
             return df  # break
 
 
@@ -60,7 +60,7 @@ def del_similar(df, tfidf_threshold):
                 del_index_list.append(i)
                 del_index_list.append(j)
     new_ind_lst = list(set(range(0, len(tf_idf))) - set(del_index_list))
-    print(f'-----DELETE {len(set(del_index_list))}/{len(df)} SIMILAR TEXT SUCCESS!!')
+    print(f'-----DELETE {len(set(del_index_list))}/{len(df)} SIMILAR TEXT SUCCESS!!-----')
     print(f'Left : {len(new_ind_lst)} lines')
     df = df.iloc[new_ind_lst]
     df = df.reset_index(drop=True)
