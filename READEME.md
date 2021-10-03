@@ -32,6 +32,7 @@
 
 
 ## 1. crawler
+
 ~~`bigkinds_crawler.py`~~
 
 - ~~뉴스 데이터 제공 사이트 [Bigkinds](https://www.kinds.or.kr)로부터 keyword를 포함/배제한 기사 수집 크롤러~~
@@ -39,18 +40,28 @@
 
 `naver_crawler.py`
 
-- 네이버 증권 뉴스로부터 크롤링
-
+- 네이버 금융 `뉴스·공시` 탭으로부터 크롤링
 - ![image](https://user-images.githubusercontent.com/38639633/134671102-9f6d0b7c-b027-462c-a0d1-c20c8e3f5b95.png)
 
-  
+`query_crawler.py`
+
+- 검색 기간과 검색어를 기반으로 뉴스 크롤링
+- 네이버는 검색기간을 아무리 길게 설정해도 최대 400페이지만 검색 가능
+- 최신순으로 검색되는 뉴스 페이지가 400페이지 도달시 마지막 기사 날짜를 파싱 후 해당 날짜로부터 다시 최신순으로 검색
+- 뉴스 기사는 언론사별 html 구조가 상이하므로 `네이버뉴스`에서 재지원하는 기사만 크롤링
 
 
 
 
 
+## 2. Senticle-BERT
 
-## 2. Senticle-CNN
-#### contents
-1. [cnn_tool.py](https://github.com/ydy8989/senticle/blob/master/Senticle-CNN/cnn_tool.py)
+`preprocessing.py`
+
+- Finance-datareader 라이브러리로부터 크롤링된 뉴스 기사의 다음날 주가 상하락 정보 레이블링
+
+## 3. Senticle-CNN
+
+1. `cnn_tool.py`
     - main.py에서 사용하는 자연어 전처리 관련 함수들 
+
