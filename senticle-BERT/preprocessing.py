@@ -1,13 +1,10 @@
 import datetime
 import warnings
 from glob import glob
-from pathlib import Path
-from typing import Union, Any
-
+from pororo import Pororo
 import FinanceDataReader as fdr
 import pandas as pd
-from pandas import Series
-from pandas.core.generic import NDFrame
+from tqdm import tqdm
 from sklearn.feature_extraction.text import TfidfVectorizer
 from naver_crawler.exceptions import *
 warnings.filterwarnings(action='ignore')
@@ -161,19 +158,27 @@ def total_preprocess(filename, colnames, tfidf_threshold, query_crawler=True):
     df = del_same(df)
     df = del_similar(df, tfidf_threshold)
     df = srt_end_cutting(df)
+
     if query_crawler:
         return df, StockCode
     else:
         return df
+def summarize_text(df):
+    lst=[]
+    summary = Pororo(task="summary", model="abstractive", lang="kr")
+    for i in tqdm(range(len(df))):
+        lst.append(summary(df.text[i]))
+    df['summarize'] = lst
+    return df
 
 if __name__ == '__main__':
     tfidf_threshold = 0.75
     query_crawler = True # False means that crawl data is output of finance_crawler.py
     datasets = '../data/삼성전자_*.csv'
-    dirs = Path(datasets)
-
+    do_summarize = True
     for filename in glob(datasets):
-        if not query_crawler:  # naver_crawler
+        # naver-Finane crawl
+        if not query_crawler:
             StockCode = filename.split('.csv')[0].split('_')[-1]
             print('-' * 100)
             print('-' * 100)
@@ -190,8 +195,11 @@ if __name__ == '__main__':
             # #Change가 0인 행 모두 삭제 (나중에 병합시 nan값으로 만들고, 채워주기 위함)
             stock = stock.drop(stock[stock.Change == 0].index, axis=0)
             df = labeling(df)
-            df.to_csv(f'../data/pre_{StockCode}.csv')
+            if do_summarize:
+                df = summarize_text(df)
+            df.to_csv(f'../data/pre_{StockCode}_test.csv')
         else:
+            # naver-query based crawl
             print('-' * 100)
             print('-' * 100)
             print(f'FILENAME : {filename}')
@@ -205,4 +213,6 @@ if __name__ == '__main__':
             # #Change가 0인 행 모두 삭제 (나중에 병합시 nan값으로 만들고, 채워주기 위함)
             stock = stock.drop(stock[stock.Change == 0].index, axis=0)
             df = labeling(df)
-            df.to_csv(f'../data/pre_{StockCode}.csv')
+            if do_summarize:
+                df = summarize_text(df)
+            df.to_csv(f'../data/pre_{StockCode}_test.csv')
