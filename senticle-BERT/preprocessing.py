@@ -7,7 +7,9 @@ import pandas as pd
 from tqdm import tqdm
 from sklearn.feature_extraction.text import TfidfVectorizer
 from naver_crawler.exceptions import *
-warnings.filterwarnings(action='ignore')
+import os
+os.environ["TOKENIZERS_PARALLELISM"] = "True"
+# warnings.filterwarnings(action='ignore')
 
 
 def del_same(df, str_threshold=50):
@@ -163,9 +165,9 @@ def total_preprocess(filename, colnames, tfidf_threshold, query_crawler=True):
         return df, StockCode
     else:
         return df
-def summarize_text(df):
+def summarize_text(df, summarize_model):
     lst=[]
-    summary = Pororo(task="summary", model="abstractive", lang="kr")
+    summary = Pororo(task="summary", model=summarize_model, lang="kr")
     for i in tqdm(range(len(df))):
         lst.append(summary(df.text[i]))
     df['summarize'] = lst
@@ -176,6 +178,7 @@ if __name__ == '__main__':
     query_crawler = True # False means that crawl data is output of finance_crawler.py
     datasets = '../data/삼성전자_*.csv'
     do_summarize = True
+    summarize_model = 'abstractive' #'abstractive'
     for filename in glob(datasets):
         # naver-Finane crawl
         if not query_crawler:
@@ -196,7 +199,10 @@ if __name__ == '__main__':
             stock = stock.drop(stock[stock.Change == 0].index, axis=0)
             df = labeling(df)
             if do_summarize:
-                df = summarize_text(df)
+                print('-'*100)
+                print('Start Summarization')
+                print('-' * 100)
+                df = summarize_text(df,summarize_model)
             df.to_csv(f'../data/pre_{StockCode}_test.csv')
         else:
             # naver-query based crawl
@@ -214,5 +220,9 @@ if __name__ == '__main__':
             stock = stock.drop(stock[stock.Change == 0].index, axis=0)
             df = labeling(df)
             if do_summarize:
-                df = summarize_text(df)
+                print('-'*100)
+                print('Start Summarization')
+                print('-' * 100)
+                df = summarize_text(df,summarize_model)
+                print('Summarization END')
             df.to_csv(f'../data/pre_{StockCode}_test.csv')

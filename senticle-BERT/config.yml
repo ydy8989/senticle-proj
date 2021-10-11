@@ -1,0 +1,91 @@
+base:
+  model_name: "bert-base-multilingual-cased"
+  seed: 42
+  tsvfile: 'train.tsv'
+  train_args:
+    num_epochs: 20
+    train_batch_size: 16
+    eval_batch_size: 16
+    lr: 0.001
+    log_interval: 10
+    weight_decay: 0.001
+    output_dir: './results/base'
+    optimizer: 'AdamW'
+    scheduler_type: 'stepLr'
+    steplr_gamma: 0.794
+    loss_fn: 'labelsmooth'
+    label_smoothing_factor: 0.0
+  val_args:
+    use_kfold: True
+    fold_break: False
+    num_k: 5
+    test_size: 0.2
+    
+koelectra:
+  model_name: "monologg/koelectra-base-v3-discriminator"
+  seed: 2021
+  tsvfile: 'train_all.tsv'
+  train_args:
+    num_epochs: 10
+    train_batch_size: 32
+    eval_batch_size: 32
+    lr: 0.00005
+    log_interval: 10
+    weight_decay: 0.001
+    output_dir: './testidea/koelectra'
+    optimizer: 'AdamW'
+    scheduler_type: 'stepLr'
+    steplr_gamma: 0.85 #0.794
+    loss_fn: 'CEloss'
+    label_smoothing_factor: 0.2
+  val_args:
+    use_kfold: True
+    fold_break: False
+    num_k: 5
+    test_size: 0.2
+
+
+roberta:
+  model_name: "xlm-roberta-large"
+  seed: 21
+  tsvfile: 'train.tsv'
+  train_args:
+    num_epochs: 1
+    train_batch_size: 1
+    eval_batch_size: 4
+    lr: 0.00001
+    log_interval: 10
+    weight_decay: 0.001
+    output_dir: './local/roberta'
+    optimizer: 'AdamW'
+    scheduler_type: 'stepLr'
+    steplr_gamma: 0.85
+    loss_fn: 'CEloss'
+    label_smoothing_factor: 0.0
+  val_args:
+    use_kfold: True
+    fold_break: False
+    num_k: 5
+    test_size: 0.2
+
+kobert:
+  model_name: "monologg/kobert"
+  seed: 2021
+  tsvfile: 'train.tsv'
+  train_args:
+    num_epochs: 10
+    train_batch_size: 16
+    eval_batch_size: 16
+    lr: 0.000001
+    log_interval: 10
+    weight_decay: 0.001
+    output_dir: './results/kobert'
+    optimizer: 'AdamW'
+    scheduler_type: 'stepLr'
+    loss_fn: 'labelsmooth'
+    label_smoothing_factor: 0.2
+  val_args:
+    use_kfold: True
+    fold_break: False
+    num_k: 5
+    test_size: 0.2
