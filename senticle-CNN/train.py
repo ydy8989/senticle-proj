@@ -12,11 +12,11 @@ from multiprocessing import Process
 def get_last_page(page=1):
     global code
     if title_entity == True:
-        # 제목 기준 crawler
+        # 제목 기준 naver_crawler
         main_url = 'https://finance.naver.com/item/news_news.nhn?code='+code+'&page=' + str(
             page) + '&sm=title_entity_id.basic&clusterId='
     else:
-        # 내용 기준 crawler
+        # 내용 기준 naver_crawler
         main_url = 'https://finance.naver.com/item/news_news.nhn?code='+code+'&page=' + str(
             page) + '&sm=entity_id.basic&clusterId='
     soup = get_html(main_url)

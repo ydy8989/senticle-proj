@@ -146,6 +146,7 @@ class ArticleCrawler(object):
                     time = re.findall('<span class="t11">(.*)</span>', request_content.text)[0]
 
                     # CSV 작성
+                    # f'{output_path}/{query}_{ds}_{de}.csv' 형식으로 파일명 작성
                     writer.write_row([time, query, text_company, text_headline, text_sentence, content_url])
 
                     # del time
