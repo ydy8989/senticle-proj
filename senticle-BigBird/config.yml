@@ -1,0 +1,69 @@
+kobert:
+  model_name: "monologg/kobert"
+  seed: 21
+  train_args:
+    num_epochs: 10
+    train_batch_size: 4
+    eval_batch_size: 8
+    lr: 0.00001
+    log_interval: 10
+    weight_decay: 0.001
+    save_dir: './models/results'
+    optimizer: 'AdamW'
+    scheduler_type: 'stepLr'
+    steplr_gamma: 0.9
+    loss_fn: 'CEloss'
+    label_smoothing_factor: 0.0
+  val_args:
+    use_kfold: True
+    fold_break: False
+    num_k: 5
+    test_size: 0.2
+
+koelectra:
+  model_name: "monologg/koelectra-base-v3-discriminator"
+  seed: 2021
+  train_args:
+    num_epochs: 5
+    train_batch_size: 4
+    max_seqlen: 512
+    eval_batch_size: 8
+    lr: 0.00001
+    log_interval: 10
+    weight_decay: 0.001
+    save_dir: './models/koelectra'
+    optimizer: 'AdamW'
+    scheduler_type: 'stepLr'
+    steplr_gamma: 0.9
+    loss_fn: 'CEloss'
+    label_smoothing_factor: 0.0
+  val_args:
+    use_kfold: True
+    fold_break: True
+    num_k: 5
+    test_size: 0.2
+
+
+bigbird:
+  model_name: "monologg/kobigbird-bert-base"
+  seed: 2021
+  train_args:
+    num_epochs: 5
+    train_batch_size: 2
+    eval_batch_size: 4
+    max_seqlen: 1024
+    lr: 0.00001
+    log_interval: 10
+    weight_decay: 0.001
+    save_dir: './models/senticle_bigbird'
+    optimizer: 'AdamW'
+    scheduler_type: 'stepLr'
+    steplr_gamma: 0.9
+    loss_fn: 'CEloss'
+    label_smoothing_factor: 0.0
+  val_args:
+    use_kfold: True
+    fold_break: True
+    num_k: 5
+    test_size: 0.2
+
