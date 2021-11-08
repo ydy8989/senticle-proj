@@ -39,14 +39,6 @@ class ArticleCrawler(object):
 
     def make_news_page_url_my(self, category_url, ds, de):
         made_urls = []
-
-        '''
-        1. 10000추가해서 400있는지 확인
-        2. 있으면 마지막 날짜 파싱
-        3. ds부터 마지막 날짜까지 픽스하고 1~400으로 링크 추가 
-        4. 날짜 new de로 업데이트 
-        5. 1부터 4 반복'''
-        # de와 ds는 한번에 받는게 좋아보인다.
         while True:
             url = category_url + f'ds={ds}&de={de}' \
                 f'&mynews=0&office_type=0&office_section_code=0&news_office_checked=&nso=so:dd,' \
