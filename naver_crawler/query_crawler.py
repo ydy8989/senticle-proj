@@ -1,15 +1,16 @@
 import os
 import platform
 import calendar
+import argparse
 import requests
 import re
 from time import sleep
 from bs4 import BeautifulSoup
 from multiprocessing import Process
 import datetime
-from naver_crawler.exceptions import *
-from naver_crawler.articleparser import ArticleParser
-from naver_crawler.writer import Writer
+from exceptions import *
+from articleparser import ArticleParser
+from writer import Writer
 from tqdm import tqdm
 class ArticleCrawler(object):
     def __init__(self):
@@ -171,7 +172,13 @@ class ArticleCrawler(object):
             proc.join()
 
 if __name__ == "__main__":
+    parser = argparse.ArgumentParser()
+    parser.add_argument('--query', type=str, default='삼성전자')
+    parser.add_argument('--start_date', type=str, default='20200101')
+    parser.add_argument('--end_date', type=str, default='20200201')
+    args = parser.parse_args(args=[])
+
     Crawler = ArticleCrawler()
-    Crawler.set_category('삼성전자')#, '포스코','KT','검색어',...
-    Crawler.set_date_range('20200101', '20200211')# 'YYYYMMDD'
+    Crawler.set_category(args.query)#, '포스코','KT','검색어',...
+    Crawler.set_date_range(args.start_date, args.end_date)
     Crawler.start()
