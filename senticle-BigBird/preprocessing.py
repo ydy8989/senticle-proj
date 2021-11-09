@@ -177,11 +177,12 @@ if __name__ == '__main__':
     tfidf_threshold = 0.75 # 연속하는 두 문서의 유사도가 tfidf_threshold 이상이면 삭제
     query_crawler = True # False means that crawl data is output of finance_crawler.py
     datasets = '../data/삼성전자_*.csv' # ./data/query_start_end.csv 파일
-
-    ######## summarize ########
+    ###########################
+    #        summarize
+    ###########################
     do_summarize = False
     summarize_model = 'abstractive' #'abstractive'
-    ###########################
+
 
     for filename in glob(datasets):
         # naver-Finane crawl
