@@ -11,7 +11,6 @@ Senticle-BigBird>
 ├──main.py
 ├──preprocessing.py
 └──README.md
-
 ```
 
 
@@ -39,3 +38,8 @@ $ python main.py --config_file_path='./config.yml' --config='bigbird' --data_pat
 
 - optimizer, shceduler, learing rate 등을 추가하고 싶으면 `config.yml` 수정 후 `main.py`에 추가하면 됩니다. 
 
+
+
+### TODO
+
+- [ ] 멀티프로세싱 안되는 것 같음. 확인요망
