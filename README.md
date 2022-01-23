@@ -1,6 +1,6 @@
 # Senticle Project
 
-**SENTICLE**은 **SEN**timental Analysis와 **ARTI**cle을 합친 단어로써 뉴스 기사 감성분석을 위한 프로젝트입니다. 
+**SENTICLE**은 **SEN**timental Analysis와 ar**TICLE**을 합친 단어로써 뉴스 기사 감성분석을 위한 프로젝트입니다. 
 
 ~~포항공대 인공지능연구원(구 정보통신연구소) "**AI BigData 인재양성 심화과정 4기**" 교육 과정 수료 중 진행했던 프로젝트입니다.~~ (업데이트 완료로 인해 기존 코드를 삭제하였습니다.) 기업별 뉴스 기사를 통한 주가 상/하락의 예측을 위해 진행하였습니다. 
 
