@@ -17,7 +17,9 @@ from sklearn.utils.class_weight import compute_class_weight
 from torch.optim.lr_scheduler import *
 from torch.utils.data import DataLoader
 from torch.utils.tensorboard import SummaryWriter
-from transformers import *
+from transformers import ElectraConfig, AutoConfig, ElectraTokenizer, AutoTokenizer,\
+    ElectraForSequenceClassification, AutoModelForSequenceClassification
+
 
 from kobert_tokenization import KoBertTokenizer
 from load_data import *
@@ -119,7 +121,6 @@ def train(cfg, data_path):
     device = torch.device('cuda:0' if torch.cuda.is_available() else 'cpu')
     print(f'device is "{device}"')
     print('MODEL_NAME:', MODEL_NAME)
-
     ##################################################################################
     #                              huggingface config
     ##################################################################################
@@ -145,8 +146,8 @@ def train(cfg, data_path):
         tokenizer = ElectraTokenizer.from_pretrained(MODEL_NAME)
     else:
         tokenizer = AutoTokenizer.from_pretrained(MODEL_NAME)
-
-    class_weights = compute_class_weight('balanced', np.unique(train_label), train_label)
+    class_weights = compute_class_weight(class_weight = 'balanced', classes = np.unique(
+        train_label), y = train_label)
     weights = torch.tensor(class_weights, dtype=torch.float)
     weights = weights.to(device)
 
@@ -194,9 +195,11 @@ def train(cfg, data_path):
             #                                      Model
             ##################################################################################
             if 'koelectra' in MODEL_NAME:
-                model = ElectraForSequenceClassification.from_pretrained(MODEL_NAME, config=model_config)
+                model = ElectraForSequenceClassification.from_pretrained(MODEL_NAME,
+                                                                         config=model_config)
             else:
-                model = AutoModelForSequenceClassification.from_pretrained(MODEL_NAME, config=model_config)
+                model = AutoModelForSequenceClassification.from_pretrained(MODEL_NAME,
+                                                                           config=model_config)
             model.to(device)
             model_dir = save_dir + f'/{idx + 1}fold'
             print(model_dir)
@@ -212,7 +215,8 @@ def train(cfg, data_path):
                     lr=cfg.values.train_args.lr,
                     weight_decay=weight_decay
                 )
-                scheduler = StepLR(optimizer, lr_decay_step, gamma=steplr_gamma)  # 794) #gamma : 20epoch => lr x 0.01
+                scheduler = StepLR(optimizer, lr_decay_step,
+                                   gamma=steplr_gamma)  # 794) #gamma : 20epoch => lr x 0.01
 
             elif scheduler_type == 'cycleLR':
                 opt_module = getattr(import_module("torch.optim"), opti)
@@ -272,7 +276,8 @@ def train(cfg, data_path):
                             f"training loss {train_loss:4.4} || training accuracy {train_acc:4.2%} || lr {current_lr:.3}"
                         )
                         logger.add_scalar("Train/loss", train_loss, epoch * len(train_loader) + idx)
-                        logger.add_scalar("Train/accuracy", train_acc, epoch * len(train_loader) + idx)
+                        logger.add_scalar("Train/accuracy", train_acc,
+                                          epoch * len(train_loader) + idx)
                         logger.add_scalar("Train/lr", current_lr, epoch * len(train_loader) + idx)
                         loss_value = 0
                         matches = 0
@@ -309,7 +314,8 @@ def train(cfg, data_path):
                     best_val_loss = min(best_val_loss, val_loss)
 
                     if val_acc > best_val_acc:
-                        print(f"New best model for val accuracy : {val_acc:4.2%}! saving the best model..")
+                        print(
+                            f"New best model for val accuracy : {val_acc:4.2%}! saving the best model..")
                         torch.save(model.state_dict(), f"./{model_dir}/best.pt")
                         best_val_acc = val_acc
                     torch.save(model.state_dict(), f"./{model_dir}/last.pt")
