@@ -332,7 +332,7 @@ if __name__ == '__main__':
     parser = argparse.ArgumentParser()
     parser.add_argument('--config_file_path', type=str, default='./config.yml')
     parser.add_argument('--config', type=str, default='bigbird')
-    parser.add_argument('--data_path', type=str, default='../data/pre_005930.csv')
+    parser.add_argument('--data_path', type=str, default='../data/pre_삼성전자_20200301_20200310.csv')
     args = parser.parse_args(args=[])
 
     cfg = YamlConfigManager(args.config_file_path, args.config)

@@ -25,22 +25,23 @@ def del_same(df, str_threshold=50):
         count += 1
         if count % 10 == 0:
             print(count)
-        try:
-            print(f"Loop {count}-th preprocessing....")
-            for i in range(0, len(df) - 1):
-                if df.iloc[i].text[:str_threshold] == df.iloc[i + 1].text[:str_threshold]:
-                    df = df.drop(df.iloc[i + 1].name, axis=0)
-        except TypeError as TE:
-            print(TE, f'// TypeError in [{i}] row')
-            error_ind_lst.append(i)
-            df = df.drop(error_ind_lst)
-            error_ind_lst = []
-        except IndexError as IE:
-            print(IE, f'// IndexError in [{i}] row')
-            error_ind_lst.append(i)
-            df = df.drop(error_ind_lst)
-            error_ind_lst = []
-        #             pass
+            try:
+                print(f"Loop {count}-th preprocessing....")
+                for i in range(0, len(df) - 1):
+                    print(i)
+                    if df.iloc[i].text[:str_threshold] == df.iloc[i + 1].text[:str_threshold]:
+                        df = df.drop(df.iloc[i + 1].name, axis=0)
+            except TypeError as TE:
+                print(TE, f'// TypeError in [{i}] row')
+                error_ind_lst.append(i)
+                df = df.drop(error_ind_lst)
+                error_ind_lst = []
+            except IndexError as IE:
+                print(IE, f'// IndexError in [{i}] row')
+                error_ind_lst.append(i)
+                df = df.drop(error_ind_lst)
+                error_ind_lst = []
+            #             pass
         else:
             print(f'-----DELETE {leng_df - len(df)}/{leng_df} SAME TEXT SUCCESS!!-----')
             return df  # break
@@ -132,13 +133,16 @@ def total_preprocess(filename, colnames, tfidf_threshold, query_crawler=True):
                      names=colnames,
                      encoding='utf8',
                      header=None,
-                     error_bad_lines=False,
+                     # error_bad_lines=False,
+                     on_bad_lines='skip',
                      index_col='time')
     if query_crawler:
         try:
             stocklist = fdr.StockListing('KRX')
+            # print(df.stock)
             StockCode = stocklist[stocklist['Name'] == df.stock[0]].Symbol.values.tolist()[0]
             print('StockCode : ', StockCode)
+        # break
         except:
             raise NoStockSymbol(df.stock[0])
         df.index = df.index.map(lambda x: time_transform(x))
@@ -158,7 +162,10 @@ def total_preprocess(filename, colnames, tfidf_threshold, query_crawler=True):
     df = df.sort_index()
     df = df.reset_index()
     df = del_same(df)
-    df = del_similar(df, tfidf_threshold)
+    ##########################################################
+    # tfidf 처리 과정에서 메모리가 부족할 수 있습니다. (del_similar)
+    ##########################################################
+    # df = del_similar(df, tfidf_threshold)
     df = srt_end_cutting(df)
 
     if query_crawler:
@@ -185,6 +192,8 @@ if __name__ == '__main__':
 
 
     for filename in glob(datasets):
+        pathname = filename.split('/')[-1].split('.')[0]
+        # break
         # naver-Finane crawl
         if not query_crawler:
             StockCode = filename.split('.csv')[0].split('_')[-1]
@@ -208,7 +217,7 @@ if __name__ == '__main__':
                 print('Start Summarization')
                 print('-' * 100)
                 df = summarize_text(df,summarize_model)
-            df.to_csv(f'../data/pre_{StockCode}.csv')
+            df.to_csv(f'../data/pre_{pathname}.csv')
         else:
             # naver-query based crawl
             print('-' * 100)
@@ -230,4 +239,4 @@ if __name__ == '__main__':
                 print('-' * 100)
                 df = summarize_text(df,summarize_model)
                 print('Summarization END')
-            df.to_csv(f'../data/pre_{StockCode}.csv')
+            df.to_csv(f'../data/pre_{pathname}.csv')
