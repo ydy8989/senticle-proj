@@ -176,7 +176,6 @@ def train(cfg, data_path):
             trind, valind = splits
             tr_label = train_label[trind]
             val_label = train_label[valind]
-            print(valind)
             print(f'-----fold_{idx}의 train/val의 클래스 비율-------')
             # for i in range(model_config.num_labels):
             #     print(f'{i}의 개수 : {tr_label.tolist().count(i)/len(tr_label):4.2%} / {val_label.tolist().count(i)/len(val_label):4.2%}')
